@@ -4,6 +4,7 @@ import Row from './Row';
 import Datum from './Datum';
 import Title from './Title';
 import Header from './Header';
+import naturalSort from './naturalSort';
 
 /*
  * The user of the table is responsible for passing in a unique key for each
@@ -21,16 +22,14 @@ import Header from './Header';
  * - alternate headers
  */
 
-const UpwardArrow = (props) => {
-  return (<svg {...props} viewBox="0 0 24 24">
-    <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z" />
-  </svg>)
-}
+const UpwardArrow = props => <svg {...props} viewBox="0 0 24 24">
+  <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z" />
+</svg>;
+
 
 class Table extends PureComponent {
-
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       sortedBy: '',
       descending: true,
@@ -38,33 +37,10 @@ class Table extends PureComponent {
     };
   }
 
-  compareValues(key, descending) {
-    return function (a, b) {
-      if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
-        // property doesn't exist on either object
-        return 0;
-      }
-      const varA = (typeof a[key] === 'string') ?
-        a[key].toUpperCase() : a[key];
-      const varB = (typeof b[key] === 'string') ?
-        b[key].toUpperCase() : b[key];
-
-      let comparison = 0;
-      if (varA > varB) {
-        comparison = 1;
-      } else if (varA < varB) {
-        comparison = -1;
-      }
-      return (
-        (descending) ? (comparison * -1) : comparison
-      );
-    };
-  }
-
   sortBy(key) {
     let shouldDescend;
     if (key === this.state.sortedBy) {
-      // flip descending or ascending 
+      // flip descending or ascending
       if (this.state.descending) {
         shouldDescend = false;
       } else {
@@ -74,8 +50,14 @@ class Table extends PureComponent {
       // default, new stort to descending
       shouldDescend = true;
     }
-    const sorted = this.state.sortedData.sort(this.compareValues(key, shouldDescend))
-    this.setState({ descending: shouldDescend, sortedData: sorted, sortedBy: key })
+    // init the sorter
+    const sorter = naturalSort({ desc: shouldDescend });
+
+    // sort by key!
+    const sorted = this.state.sortedData.sort(
+      (a, b) => sorter(a[key], b[key])
+    );
+    this.setState({ descending: shouldDescend, sortedData: sorted, sortedBy: key });
   }
 
 
@@ -109,7 +91,9 @@ class Table extends PureComponent {
           <tbody>
             {this.state.sortedData.map(datum => (
               <Row key={`row_${datum.key}`}>
-                {this.props.checkbox && <this.props.checkbox onClick={() => this.props.checkbox.callback(datum.key)} />}
+                {this.props.checkbox &&
+                  <this.props.checkbox onClick={() => this.props.checkbox.callback(datum.key)} />
+                }
                 {this.props.fields.map(({ key, numerical }, i) => (
                   <Datum
                     key={`{${datum.key}_${key}}`}
@@ -126,8 +110,8 @@ class Table extends PureComponent {
           </tbody>
         </table>
       </div >
-    )
-  };
+    );
+  }
 }
 
 export default styled(Table) `
@@ -141,8 +125,6 @@ export default styled(Table) `
     > .smc-table-header {
       padding: 0 14px;
     }
-
-
 
     > .smc-table-table {
       border-collapse: collapse;
@@ -173,8 +155,6 @@ export default styled(Table) `
           transform: rotate(180deg);
         }
       }
-
-
 
       tr {
         border: 0px;

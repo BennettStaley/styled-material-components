@@ -9,7 +9,6 @@ const RowComponent = ({ className, children }) => (
 );
 
 const Row = styled(RowComponent) `
-
   ${({ header }) => !header && `
     &:hover {
       background-color: #F5F5F5;
@@ -17,11 +16,11 @@ const Row = styled(RowComponent) `
   `}
 
   .smc-checkbox-container { 
-    margin-top: ${ ({ header }) => (header ? 8 : 5)}px;
+    margin-top: ${({ header }) => (header ? 8 : 5)}px;
     vertical-align: middle;
   }
 
-  height: ${ ({ header }) => (header ? 54 : 48)}px;
+  height: ${({ header }) => (header ? 54 : 48)}px;
 `;
 
 export default Row;

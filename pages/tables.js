@@ -68,9 +68,6 @@ const StyledTable = Table.extend`
   }
 `;
 
-const callback = (data) => {
-  alert('called with', data)
-}
 
 const Tables = () => (
   <MaterialThemeProvider>
@@ -99,7 +96,7 @@ const Tables = () => (
       />
       <h2>Table checkboxes</h2>
       <Table
-        checkbox={() => <Checkbox callback={callback} />}
+        checkbox={() => <Checkbox />}
         fields={fields}
         data={data}
         header="Table header"
