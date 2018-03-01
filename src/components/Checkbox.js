@@ -17,8 +17,15 @@ class Checkbox extends PureComponent {
   };
 
   render() {
-    const { primary, disabled, checked: checkedProp, value, id, className } = this.props;
-    const { indeterminate } = this.state;
+    const {
+      primary,
+      disabled,
+      checked: checkedProp,
+      value,
+      id,
+      className,
+      indeterminate,
+    } = this.props;
     // determine if checkbox is controlled or uncontrolled
     const checked = checkedProp !== undefined ? checkedProp : this.state.checked;
 
@@ -35,7 +42,7 @@ class Checkbox extends PureComponent {
           disabled={disabled}
           indeterminate={indeterminate}
         >
-          {indeterminate && <IndeterminateMark />}
+          {checked && indeterminate && <IndeterminateMark />}
           {checked && !indeterminate && <CheckMark />}
         </Box>
         <Input
@@ -90,13 +97,13 @@ const Box = styled.div`
   right: 11px;
   border: solid 2px
     ${(props) => {
-    if (props.checked || props.indeterminate) return 'transparent';
+    if (props.checked) return 'transparent';
     else if (props.disabled) return props.theme.disabledCheckbox;
     return props.theme.textColors.secondary;
   }};
   border-radius: 2px;
   background-color: ${(props) => {
-    if (props.checked || props.indeterminate) {
+    if (props.checked) {
       if (props.disabled) return props.theme.disabledCheckbox;
       else if (props.primary) return props.theme.primary;
       return props.theme.accent;

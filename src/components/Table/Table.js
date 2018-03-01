@@ -5,6 +5,8 @@ import Datum from './Datum';
 import Title from './Title';
 import Header from './Header';
 import naturalSort from './naturalSort';
+import elevation from '../../mixins/elevation';
+import Checkbox from '../Checkbox'
 
 /*
  * The user of the table is responsible for passing in a unique key for each
@@ -14,7 +16,6 @@ import naturalSort from './naturalSort';
  * TODO:
  * - footer
  * - row selection
- * - enable column sorting
  * - column name hover
  * - long header titles
  * - inline text editing
@@ -31,10 +32,60 @@ class Table extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
+      selectedAllActive: false,
+      selectedItems: {},
       sortedBy: '',
-      descending: true,
+      descending: false,
       sortedData: this.props.data,
     };
+  }
+
+
+  selectAll = () => {
+    const data = this.state.sortedData;
+    const itemsToSet = {};
+    for (let i = 0; i < data.length; i += 1) {
+      const item = data[i];
+      !this.state.selectedItems[item.key] && this.props.onCheck && this.props.onCheck(item);
+      itemsToSet[item.key] = true;
+    }
+    this.setState({
+      selectedItems: itemsToSet,
+      selectedAllActive: true,
+    });
+  }
+
+  toggleIndividualSelect = (datum) => {
+    const itemsToSet = { ...this.state.selectedItems };
+    if (itemsToSet[datum.key]) {
+      this.props.onUncheck(datum);
+      delete itemsToSet[datum.key];
+    } else {
+      this.props.onCheck(datum);
+      itemsToSet[datum.key] = true;
+    }
+    const selectedAll =
+      Object.keys(this.state.sortedData).length === Object.keys(itemsToSet).length;
+    this.setState({
+      selectedItems: itemsToSet,
+      selectedAllActive: selectedAll,
+    });
+  }
+
+  unselectAll = () => {
+    // why loop through the object rather than
+    // just setting it to {}
+
+    // we need to call props.onUncheck for each!
+    const data = this.state.sortedData;
+    for (let i = 0; i < data.length; i += 1) {
+      const item = data[i];
+      this.props.onUncheck && this.props.onUncheck(item);
+    }
+    this.setState({
+      selectedItems: {},
+      selectedAllActive: false,
+    });
   }
 
   sortBy(key) {
@@ -48,7 +99,7 @@ class Table extends PureComponent {
       }
     } else {
       // default, new stort to descending
-      shouldDescend = true;
+      shouldDescend = false;
     }
     // init the sorter
     const sorter = naturalSort({ desc: shouldDescend });
@@ -68,7 +119,12 @@ class Table extends PureComponent {
         <table className="smc-table-table">
           <thead className="smc-table-head">
             <Row header>
-              {this.props.checkbox && <this.props.checkbox />}
+              {this.props.hasCheckboxes && <th>
+                <Checkbox
+                  checked={this.state.selectedAllActive}
+                  onChange={this.state.selectedAllActive ? this.unselectAll : this.selectAll}
+                />
+              </th>}
               {this.props.fields.map(({ label, numerical, key, sortable }, i) => (
                 <Title
                   key={label}
@@ -79,7 +135,7 @@ class Table extends PureComponent {
                 >
                   <div className='sortButtonContainer'>
                     {sortable && <UpwardArrow
-                      className={this.state.sortedBy === key && this.state.descending ? 'sortButton rotate' : 'sortButton'}
+                      className={this.state.sortedBy === key && !this.state.descending ? 'sortButton rotate' : 'sortButton'}
                       onClick={() => this.sortBy(key)}
                     />}
                     {label}
@@ -91,8 +147,13 @@ class Table extends PureComponent {
           <tbody>
             {this.state.sortedData.map(datum => (
               <Row key={`row_${datum.key}`}>
-                {this.props.checkbox &&
-                  <this.props.checkbox onClick={() => this.props.checkbox.callback(datum.key)} />
+                {this.props.hasCheckboxes &&
+                  <td>
+                    <Checkbox
+                      checked={Boolean(this.state.selectedItems[datum.key])}
+                      onChange={() => this.toggleIndividualSelect(datum)}
+                    />
+                  </td>
                 }
                 {this.props.fields.map(({ key, numerical }, i) => (
                   <Datum
@@ -115,7 +176,9 @@ class Table extends PureComponent {
 }
 
 export default styled(Table) `
-  ${props => (props.fullWidth ? 'width: 100%' : '')};
+    ${props => (props.fullWidth ? 'width: 100%' : '')};
+    ${elevation(2)};
+    display: inline-block;
     overflow: hidden;
     background-color: #fff;
     border-radius: 3px;
@@ -130,16 +193,15 @@ export default styled(Table) `
       border-collapse: collapse;
 
       .sortButtonContainer {
-        height: 18px;
+        height: 15px;
         display: inline-flex;
         
         > .sortButton {
-        height: 18px;
-        width: 18px;
-          
+          height: 15px;
+          width: 15px;
           float: right;
           cursor: pointer;
-          border-radius: 8px;
+          border-radius: 7.5px;
           display: block;
           margin-right: 16px;
           fill: rgba(0, 0, 0, .54);

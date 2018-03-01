@@ -1,6 +1,6 @@
+import React, { PureComponent } from 'react';
 import MaterialThemeProvider from '../src/theme/ThemeProvider';
 import { Table } from '../src/components/Table';
-import Checkbox from '../src/components/Checkbox'
 
 const fields = [
   {
@@ -13,7 +13,7 @@ const fields = [
     key: 'event',
     label: 'Event',
     numerical: false,
-    sortable: false,
+    sortable: true,
   },
   {
     key: 'price',
@@ -69,40 +69,56 @@ const StyledTable = Table.extend`
 `;
 
 
-const Tables = () => (
-  <MaterialThemeProvider>
-    <div>
-      <h1>Tables</h1>
-      <h2>Regular Table</h2>
-      <Table
-        fields={fields}
-        data={data}
-        header="Table header"
-      />
-      <h2>Fullwidth table</h2>
-      <div style={{ width: '850px' }}>
+class Tables extends PureComponent {
+  state = {
+    clickedItems: 0,
+  }
+
+  render() {
+    return (<MaterialThemeProvider>
+      <div>
+        <h1>Tables</h1>
+        <h2>Regular Table</h2>
         <Table
-          fullWidth
           fields={fields}
           data={data}
           header="Table header"
         />
+        <h2>Fullwidth table</h2>
+        <div style={{ width: '850px' }}>
+          <Table
+            fullWidth
+            fields={fields}
+            data={data}
+            header="Table header"
+          />
+        </div>
+        <h2>Table with column style override</h2>
+        <StyledTable
+          fields={fields}
+          data={data}
+          header="Table header"
+        />
+        <h2>Table checkboxes</h2>
+        <Table
+          indeterminate
+          hasCheckboxes
+          onCheck={() => {
+            this.setState({ clickedItems: this.state.clickedItems + 1 });
+            console.log('select');
+          }}
+          onUncheck={() => {
+            this.setState({ clickedItems: this.state.clickedItems - 1 });
+            console.log('deselect');
+          }}
+          fields={fields}
+          data={data}
+          header={`Clicked items: ${this.state.clickedItems}`}
+        />
       </div>
-      <h2>Table with column style override</h2>
-      <StyledTable
-        fields={fields}
-        data={data}
-        header="Table header"
-      />
-      <h2>Table checkboxes</h2>
-      <Table
-        checkbox={() => <Checkbox />}
-        fields={fields}
-        data={data}
-        header="Table header"
-      />
-    </div>
-  </MaterialThemeProvider>
-);
+    </MaterialThemeProvider>
+    );
+  }
+}
 
 export default Tables;
