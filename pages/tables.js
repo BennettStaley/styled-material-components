@@ -1,21 +1,25 @@
 import MaterialThemeProvider from '../src/theme/ThemeProvider';
 import { Table } from '../src/components/Table';
+import Checkbox from '../src/components/Checkbox'
 
 const fields = [
   {
     key: 'date',
     label: 'Date',
     numerical: false,
+    sortable: true,
   },
   {
     key: 'event',
     label: 'Event',
     numerical: false,
+    sortable: false,
   },
   {
     key: 'price',
     label: 'Price',
     numerical: true,
+    sortable: true,
   },
 ];
 
@@ -25,6 +29,24 @@ const data = [
     date: '02/01/17',
     event: 'Price Change',
     price: '$24,500,000',
+  },
+  {
+    key: 'xzvxzcv',
+    date: '02/01/17',
+    event: 'Open House',
+    price: '$5,500,000',
+  },
+  {
+    key: 'ssssdas',
+    date: '02/01/17',
+    event: 'Showing',
+    price: '$14,500,000',
+  },
+  {
+    key: 'efsadf',
+    date: '02/01/17',
+    event: 'Price Change',
+    price: '$774,500,000',
   },
   {
     key: '2398ro829j',
@@ -46,6 +68,10 @@ const StyledTable = Table.extend`
   }
 `;
 
+const callback = (data) => {
+  alert('called with', data)
+}
+
 const Tables = () => (
   <MaterialThemeProvider>
     <div>
@@ -57,14 +83,23 @@ const Tables = () => (
         header="Table header"
       />
       <h2>Fullwidth table</h2>
-      <Table
-        fullWidth
+      <div style={{ width: '850px' }}>
+        <Table
+          fullWidth
+          fields={fields}
+          data={data}
+          header="Table header"
+        />
+      </div>
+      <h2>Table with column style override</h2>
+      <StyledTable
         fields={fields}
         data={data}
         header="Table header"
       />
-      <h2>Table with column style override</h2>
-      <StyledTable
+      <h2>Table checkboxes</h2>
+      <Table
+        checkbox={() => <Checkbox callback={callback} />}
         fields={fields}
         data={data}
         header="Table header"

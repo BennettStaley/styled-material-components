@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import styled from 'styled-components';
 import Row from './Row';
 import Datum from './Datum';
@@ -12,7 +12,6 @@ import Header from './Header';
  *
  * TODO:
  * - footer
- * - row hover
  * - row selection
  * - enable column sorting
  * - column name hover
@@ -21,52 +20,167 @@ import Header from './Header';
  * - inline menus
  * - alternate headers
  */
-const Table = props => (
-  <div className={`smc-table-wrapper ${props.className}`}>
-    {props.header && <Header>{props.header}</Header>}
-    <table className="smc-table-table">
-      <thead className="smc-table-head">
-        <Row header>
-          {props.fields.map(({ label, numerical, key }, i) => (
-            <Title
-              key={label}
-              column={key}
-              numerical={numerical}
-              first={i === 0}
-              last={i === props.fields.length - 1}
-            >
-              {label}
-            </Title>
-          ))}
-        </Row>
-      </thead>
-      <tbody>
-        {props.data.map(datum => (
-          <Row key={`row_${datum.key}`}>
-            {props.fields.map(({ key, numerical }, i) => (
-              <Datum
-                key={`{${datum.key}_${key}}`}
-                column={key}
-                numerical={numerical}
-                first={i === 0}
-                last={i === props.fields.length - 1}
-              >
-                {datum[key]}
-              </Datum>
-            ))}
-          </Row>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
 
-export default styled(Table)`
-  ${props => (props.fullWidth ? 'width: 100%' : '')};
+const UpwardArrow = (props) => {
+  return (<svg {...props} viewBox="0 0 24 24">
+    <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z" />
+  </svg>)
+}
 
-  > .smc-table-table {
-    ${props => (props.fullWidth ? 'width: 100%' : '')};
-    border-collapse:collapse;
-    border-spacing: 40px;
+class Table extends PureComponent {
+
+  constructor(props) {
+    super(props)
+    this.state = {
+      sortedBy: '',
+      descending: true,
+      sortedData: this.props.data,
+    };
   }
+
+  compareValues(key, descending) {
+    return function (a, b) {
+      if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
+        // property doesn't exist on either object
+        return 0;
+      }
+      const varA = (typeof a[key] === 'string') ?
+        a[key].toUpperCase() : a[key];
+      const varB = (typeof b[key] === 'string') ?
+        b[key].toUpperCase() : b[key];
+
+      let comparison = 0;
+      if (varA > varB) {
+        comparison = 1;
+      } else if (varA < varB) {
+        comparison = -1;
+      }
+      return (
+        (descending) ? (comparison * -1) : comparison
+      );
+    };
+  }
+
+  sortBy(key) {
+    let shouldDescend;
+    if (key === this.state.sortedBy) {
+      // flip descending or ascending 
+      if (this.state.descending) {
+        shouldDescend = false;
+      } else {
+        shouldDescend = true;
+      }
+    } else {
+      // default, new stort to descending
+      shouldDescend = true;
+    }
+    const sorted = this.state.sortedData.sort(this.compareValues(key, shouldDescend))
+    this.setState({ descending: shouldDescend, sortedData: sorted, sortedBy: key })
+  }
+
+
+  render() {
+    return (
+      <div className={`smc-table-wrapper ${this.props.className}`}>
+        {this.props.header && <Header>{this.props.header}</Header>}
+        <table className="smc-table-table">
+          <thead className="smc-table-head">
+            <Row header>
+              {this.props.checkbox && <this.props.checkbox />}
+              {this.props.fields.map(({ label, numerical, key, sortable }, i) => (
+                <Title
+                  key={label}
+                  column={key}
+                  numerical={numerical}
+                  first={i === 0}
+                  last={i === this.props.fields.length - 1}
+                >
+                  <div className='sortButtonContainer'>
+                    {sortable && <UpwardArrow
+                      className={this.state.sortedBy === key && this.state.descending ? 'sortButton rotate' : 'sortButton'}
+                      onClick={() => this.sortBy(key)}
+                    />}
+                    {label}
+                  </div>
+                </Title>
+              ))}
+            </Row>
+          </thead>
+          <tbody>
+            {this.state.sortedData.map(datum => (
+              <Row key={`row_${datum.key}`}>
+                {this.props.checkbox && <this.props.checkbox onClick={() => this.props.checkbox.callback(datum.key)} />}
+                {this.props.fields.map(({ key, numerical }, i) => (
+                  <Datum
+                    key={`{${datum.key}_${key}}`}
+                    column={key}
+                    numerical={numerical}
+                    first={i === 0}
+                    last={i === this.props.fields.length - 1}
+                  >
+                    {datum[key]}
+                  </Datum>
+                ))}
+              </Row>
+            ))}
+          </tbody>
+        </table>
+      </div >
+    )
+  };
+}
+
+export default styled(Table) `
+  ${props => (props.fullWidth ? 'width: 100%' : '')};
+    overflow: hidden;
+    background-color: #fff;
+    border-radius: 3px;
+    border-spacing: 0;
+    border: 0px;
+  
+    > .smc-table-header {
+      padding: 0 14px;
+    }
+
+
+
+    > .smc-table-table {
+      border-collapse: collapse;
+
+      .sortButtonContainer {
+        height: 18px;
+        display: inline-flex;
+        
+        > .sortButton {
+        height: 18px;
+        width: 18px;
+          
+          float: right;
+          cursor: pointer;
+          border-radius: 8px;
+          display: block;
+          margin-right: 16px;
+          fill: rgba(0, 0, 0, .54);
+          transform-origin: center;
+          transition: 0.3s;
+        }
+
+        > .sortButton:hover {
+          background-color: rgba(0, 0, 0, .04);
+        }
+
+        > .rotate {
+          transform: rotate(180deg);
+        }
+      }
+
+
+
+      tr {
+        border: 0px;
+        border-bottom: 1px solid rgba(0, 0, 0, .54);
+      }
+      ${props => (props.fullWidth ? 'width: 100%' : 'width: auto')};
+      border-spacing: 0;
+    }
 `;
